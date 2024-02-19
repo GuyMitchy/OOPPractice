@@ -437,8 +437,7 @@ class Gunner(Human):
                     time.sleep(0.8)
                     print("...")
                     time.sleep(0.8)
-                    print(' ')
-                    self.is_charging = False            
+                    print(' ')            
                           
                 damage = self.strength * random.uniform(5, 5.5)
                 self.ap -= 2
@@ -752,17 +751,15 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
                     time.sleep(0.8)
                     print(" ")
                     player_character.stop_charging()
-                    if self.enemy.hp <= 0:
-                        raise FightOverException  # enemy is defeated, break the fight loop
                     print(" ")
+
                 elif action == "special attack":
                     print(" ")
                     charged_spec_attack_success = self.player_character.charged_spec_attack(self.enemy)
-                    if charged_spec_attack_success: # if enough ap
-                        player_character.stop_charging() # runs the method and sets attack succes to true of false.
+                    if charged_spec_attack_success: # if enough ap, it runs the method and sets attack succes to true of false.
+                        player_character.stop_charging() 
                         time.sleep(0.8)                        
-                        if self.enemy.hp <= 0:
-                            raise FightOverException  # enemy is defeated, break the fight loop
+                          
                     else:
                         action = ""
                 else:
