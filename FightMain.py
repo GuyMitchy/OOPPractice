@@ -99,7 +99,6 @@ class Fighters():
         print(f'Strength: -{crippled_defense_modifier}')
         time.sleep(0.8)
         print(f'Defense: -{crippled_defense_modifier}')
-        print(f'{self.defense}')
         time.sleep(0.8)
 
     def enemy_is_melting(self):  # used for shocked as well as melting
@@ -119,7 +118,7 @@ class Fighters():
             
     
     def charge(self):
-        self.strength *= 1.6
+        self.strength *= 1.4
         player_character.is_charging = True
         print(f"{self.name} is charging up for big damage on the next turn.")  
         time.sleep(0.8)
@@ -129,7 +128,7 @@ class Fighters():
 
     def stop_charging(self):
         if self.is_charging:
-            self.strength /= 1.6  # ...bring strength back to its original value.
+            self.strength /= 1.4  # ...bring strength back to its original value.
             self.strength = int(self.strength)
             print(" ")
             time.sleep(0.8)
@@ -186,13 +185,13 @@ class Fighters():
         print(" ")
         time.sleep(0.8)
         print(f"HP: {self.hp}")
-        time.sleep(0.3)
+        time.sleep(0.5)
         print(f"AP:{self.ap}")
-        time.sleep(0.3)
+        time.sleep(0.5)
         print(f"Strength: {self.strength}")
-        time.sleep(0.3)
+        time.sleep(0.5)
         print(f"Defense: {self.defense}")
-        time.sleep(0.3)
+        time.sleep(0.5)
         print(" ")
         print(f"Bandages now heal {self.heal_amount}HP")
    
@@ -748,6 +747,7 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
                 time.sleep(0.8) 
                 
                 if action == "attack":
+                    print(" ")
                     player_character.attack(self.enemy)
                     time.sleep(0.8)
                     print(" ")
@@ -756,6 +756,7 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
                         raise FightOverException  # enemy is defeated, break the fight loop
                     print(" ")
                 elif action == "special attack":
+                    print(" ")
                     charged_spec_attack_success = self.player_character.charged_spec_attack(self.enemy)
                     if charged_spec_attack_success: # if enough ap
                         player_character.stop_charging() # runs the method and sets attack succes to true of false.
@@ -794,22 +795,21 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
         # the rest of your code follows
 
             if action == 'defend':
+                print(" ")
                 self.player_character.defend()  # Boost defense.            
                 time.sleep(0.8)
 
             elif action == "attack":
+                print(" ")
                 self.player_character.attack(self.enemy)
                 time.sleep(0.8)
-                if self.enemy.hp <= 0:
-                    raise FightOverException  # enemy is defeated, break the fight loop
                 print(" ")
 
             elif action == "special attack":
+                print(" ")
                 spec_attack_attack_success = self.player_character.spec_attack(self.enemy)  
                 if spec_attack_attack_success: # if special attack was successful
                     time.sleep(0.8)
-                    if self.enemy.hp <= 0:
-                        raise FightOverException  # enemy is defeated, break the fight loop
                     print(" ")
                 else:
                     print(" ")
@@ -818,10 +818,12 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
                     print(" ")
 
             elif action == "charge":
+                print(" ")
                 self.player_character.charge()
                 time.sleep(0.8)
 
             elif action == 'heal':
+                print(" ")
                 if self.player_character.get_num_bandages(): # checks if get_num_banadages == true
                     self.player_character.heal()
                 else:
@@ -836,44 +838,57 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
                 print(" ")
                 action = ""  # reset the action, forcing the inner loop to repeat
                 time.sleep(0.8)
+   
 
     def charged_enemy_turn(self):
-        pass # ned to figure this out
-
+        pass # need to figure this out. on second thought i dont think i want enemies to charge. maybe only the boss. 
+ 
     def enemy_turn(self):
         print ("-----Enemy turn-----")
         print(" ")
         if self.enemy.is_melting == True:
             self.enemy.enemy_is_melting()
+            if self.enemy.hp <= 0:
+                    raise FightOverException  # enemy is defeated, break the fight loop
         
         if self.enemy.hp <= 0:
             raise FightOverException  # enemy is defeated, break the main fight loop
+        
+
         if self.enemy.hp > 10:
-        # High hp - Perform a normal attack unless a random 1 in 4 condition is met for performing a special attack.
-            if self.enemy.ap > 0: 
+        # High hp - if enemy has enough ap it performs a normal attack unless a random 1 in 4 condition is met for performing a special attack.
+            if self.enemy.ap > 0:   
                 if random.randint(1, 4) == 4:
+                    self.enemy.spec_attack(self.player_character)
+                else:
+                    self.enemy.attack(self.player_character)
+            else:
+                    self.enemy.attack(self.player_character) 
+        
+        elif self.enemy.hp <= 10:
+            
+        # Low hp - if the enemy has enough ap it will perform a normal attack, heal, or special attack based on different random conditions.
+            
+            if self.enemy.ap > 0:
+                random_number = random.randint(1, 3)
+                if random_number == 1:
                     self.enemy.spec_attack(self.player_character)
                     if self.player_character.hp <= 0:
                         raise FightOverException
-            else:
-                self.enemy.attack(self.player_character)
-            if self.player_character.hp <= 0:
-                raise FightOverException  
-        elif self.enemy.hp <= 10:
-        # Low hp - Perform a normal attack, heal, or special attack based on different random conditions.
-            random_number = random.randint(1, 3)
-            if self.enemy.ap > 0:    # FUCKED THIS UP NEED TO FIGURE IT OUT
-                if random_number == 1:
-                        self.enemy.spec_attack(self.player_character)
-                if self.player_character.hp <= 0:
-                    raise FightOverException
                 elif random_number == 2:
                     self.enemy.attack(self.player_character)
-                if self.player_character.hp <= 0:
-                    raise FightOverException
-            
+                    if self.player_character.hp <= 0:
+                        raise FightOverException
+        
+                else:
+                    self.enemy.heal()
             else:
-                self.enemy.heal()
+                random_number = random.randint(1, 2)
+                if random_number == 1:
+                    self.enemy.attack(self.player_character)
+                  
+                else:
+                    self.enemy.heal()  
 
         self.player_character.stop_defending()
             
@@ -947,6 +962,7 @@ class Fight2(Fight):    #Contains Start() and fight2_intro()
         input()
         print("Rocky is in a rage and attacks first.....")
         print(" ")
+        input()
 
     def start(self):
         self.turn_counter = 0
@@ -1026,7 +1042,7 @@ class Fight4(Fight):    #Contains Start() and fight2_intro()
         super().__init__(player_character, enemy)
 
     def fight_intro(self):
-        input()
+        print("")
        
         print("As the arena lights dim, a familiar silhouette emerges from the shadows.......")
         
@@ -1111,96 +1127,106 @@ if input() == "yes":
 
 # define class instances
 
-robin_hood = Archer("Robin Hood", 80, 1, 6, 7, 1, 1, 10)
+robin_hood = Archer("Robin Hood", 60, 1, 6, 7, 1, 1, 10)
 
-rocky = Boxer("Rocky", 140, 2, 7, 8, 1, 5)
+rocky = Boxer("Rocky", 90, 2, 7, 8, 1, 5)
 
-rambo = Gunner("Rambo", 185, 2, 10, 12, 1, 5, 10, 5) 
+rambo = Gunner("Rambo", 140, 2, 10, 12, 1, 5, 10, 5) 
 
-highlander = Warrior("Highlander", 250, 3, 12, 14, 1, 3)
+highlander = Warrior("Highlander", 200, 3, 12, 14, 1, 3)
 
-teen_wolf = Monster("Teen Wolf", 350, 3, 15, 18, 1)
+teen_wolf = Monster("Teen Wolf", 280, 3, 15, 18, 1)
 
-Terminator = Robo("Terminator", 500, 4, 20, 25, 1, 1, 100, 2)
+Terminator = Robo("Terminator", 350, 4, 20, 25, 1, 1, 100, 2)
 
 
 # CALLING GAME LOGIC_________________________________________________
 
 def create_character(): # this function print all the available classes and takes an input from a user to choose their class.
     
+    print("")
+    print("")
+    print("")
+    print("")
+    print("Welcome to THE ARENA!....(Press ENTER to continue)")
+    input()
+    print("")
+    print("Here you can pit your own fighter against the toughest fighters in history.....")
+    input()
+    print("")
+    print("Choose your fighter!....")
+    print(" ")
+    input()
+    print("Archer")
+    base_archer_stats = Human.get_stats("Archer", 80, 3, 5, 7, 5)
+    print(base_archer_stats)
+    print(" ")
+    time.sleep(0.5)
+    print("Boxer")
+    base_boxer_stats = Human.get_stats("Boxer", 70, 1, 8, 7, 4)
+    print(base_boxer_stats)
+    print(" ")
+    time.sleep(0.5)
+    print("Gunner")
+    base_gunner_stats = Human.get_stats("Gunner", 65, 1, 8, 8, 4)
+    print(base_gunner_stats)
+    print(" ")
+    time.sleep(0.5)
+    print("Warrior")
+    base_warrior_stats = Human.get_stats("Warrior", 70, 2, 6, 6, 3)
+    print(base_warrior_stats)
+    print(" ")
+    time.sleep(0.5)
+    print("Robot")
+    base_robo_stats = Robo.get_stats("Robot", 80, 2, 7, 7, 2)
+    print(base_robo_stats)
+    print(" ")
+    time.sleep(1)
+
     while True:
-        print("")
-        print("")
-        print("")
-        print("")
-        print("Welcome to the arena!")
-        #time.sleep(0.8)
-        print("")
-        print("Here you can pit your own fighter against the toughest fighters in history.")
-        #time.sleep(3)
-        print("")
-        print("Here are your fighters")
-        print(" ")
-        #time.sleep(2)
-        print("Archer")
-        base_archer_stats = Human.get_stats("Archer", 80, 6, 5, 7, 5)
-        print(base_archer_stats)
-        print(" ")
-        #time.sleep(1)
-        print("Boxer")
-        base_boxer_stats = Human.get_stats("Boxer", 60, 4, 8, 7, 4)
-        print(base_boxer_stats)
-        print(" ")
-        #time.sleep(1)
-        print("Gunner")
-        base_gunner_stats = Human.get_stats("Gunner", 50, 4, 8, 8, 4)
-        print(base_gunner_stats)
-        print(" ")
-        #time.sleep(1)
-        print("Warrior")
-        base_warrior_stats = Human.get_stats("Warrior", 70, 6, 6, 6, 3)
-        print(base_warrior_stats)
-        print(" ")
-        #time.sleep(2)
-        print("Robot")
-        base_robo_stats = Robo.get_stats("Robot", 80, 4, 7, 7, 2)
-        print(base_robo_stats)
-        print(" ")
-        #time.sleep(2)
-        print("Choose a class by typing its name:")
-        
-        
+        print("Select a class by typing it's name:")    
+    
         class_choice = input() # store user input in class choice variable
         print(" ")
-       
-
+        
         print("Enter a name for your character:") # user enters name and we store it in the name variable
         name = input()
         #time.sleep(0.8)
-
+    
     # if class choice equls a particluar class type return that class type with name and base stats
         print(" ")
         if class_choice.lower() == "archer":
+            time.sleep(1)
             print(f"{name} the Archer has entered the arena!")
+            time.sleep(1)
             return Archer(name, 80, 3, 5, 7, 1, 5, 10)
             
         elif class_choice.lower() == "boxer":
+            time.sleep(1)
             print(f"{name} the Boxer has entered the arena!")
-            return Boxer(name, 60, 1, 8, 7, 1, 4)
-        
+            time.sleep(1)
+            return Boxer(name, 70, 1, 8, 7, 1, 4)
+            
         elif class_choice.lower() == "gunner":
+            time.sleep(1)
             print(f"{name} the Gunner has entered the arena!")
-            return Gunner(name, 50, 1, 8, 8, 1, 4, 25, 5)
+            time.sleep(1)
+            return Gunner(name, 65, 1, 8, 8, 1, 4, 25, 5)
             
         elif class_choice.lower() == "warrior":
+            time.sleep(1)
             print(f"{name} the Warrior has entered the arena!")
+            time.sleep(1)
             return Warrior(name, 70, 2, 6, 6, 1, 3)
-        
+            
         elif class_choice.lower() == "robot":
+            time.sleep(1)
             print(f"{name} the robot has entered the arena!")
-            return Robo(name, 80, 2, 7, 7, 1, 1, 100, 2)
+            time.sleep(1)
+            return Robo(name, 80, 2, 7, 7, 1, 2, 100, 2)
         else:
-            print("Invalid class, try again")
+            print("Invalid class, try again!")
+            print("")
          
 
 # Use the function to create a character
