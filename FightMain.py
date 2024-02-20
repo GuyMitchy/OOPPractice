@@ -28,7 +28,9 @@ class Fighters():
         self.hp_scaler = 0
         self.strength_scaler = 0
         self.defense_scaler = 0
-        self.is_melting = False      
+        self.is_melting = False     
+        self.is_shocked = False 
+        self.is_bleeding = False
             
     def take_damage(self, damage):
         damage -= self.defense
@@ -51,9 +53,7 @@ class Fighters():
             time.sleep(2)
             print("-------GAME OVER-------")
             sys.exit()
-        #if self.is_melting == True:       Dont think i need this
-         #   if self.hp > 0:
-          #      print(f"{self.name} is melting.")
+       
         if self.hp <= 0:
             raise FightOverException
         
@@ -101,16 +101,18 @@ class Fighters():
         print(f'Defense: -{crippled_defense_modifier}')
         time.sleep(0.8)
 
-    def enemy_is_melting(self):  # used for shocked as well as melting
+    def enemy_is_hurt(self):  # used for shocked as well as melting
             # this only runs at the start of the enmy turn after checking if they are melting with. if enemy.is_melting == True
-            melting_hp_modifier = 5 # set how much hp enemy loses when melting
-            self.hp -= melting_hp_modifier # remove the melting modifier from hp
+            hurt_hp_modifier = 5 # set how much hp enemy loses when melting
+            self.hp -= hurt_hp_modifier # remove the melting modifier from hp
             if self.hp < 0:
                 self.hp = 0
-            if isinstance(self,Archer):
-                print(f'{self.name} is shocked!. -{melting_hp_modifier}HP') 
-            else:
-                print(f'{self.name} is melting! -{melting_hp_modifier}HP')
+            if self.is_shocked == True:
+                print(f'{self.name} is shocked!. -{hurt_hp_modifier}HP') 
+            elif self.is_melting == True:
+                print(f'{self.name} is melting! -{hurt_hp_modifier}HP')
+            elif self.is_bleeding == True:
+                print(f'{self.name} is bleeding! -{hurt_hp_modifier}HP')
             time.sleep(0.8)
             print(" ")
             print(f"{self.name} has {self.hp}HP")
@@ -119,6 +121,7 @@ class Fighters():
     
     def charge(self):
         self.strength *= 1.4
+        self.ap += 1
         player_character.is_charging = True
         print(f"{self.name} is charging up for big damage on the next turn.")  
         time.sleep(0.8)
@@ -129,7 +132,6 @@ class Fighters():
     def stop_charging(self):
         if self.is_charging:
             self.strength /= 1.4  # ...bring strength back to its original value.
-            self.strength = int(self.strength)
             print(" ")
             time.sleep(0.8)
             print(f"{self.name} stopped charging")
@@ -224,7 +226,7 @@ class Human(Fighters):
         self.is_defending = False
         self.turn_counter = 0
         self.xp = 0
-        self.heal_amount = 10
+        self.heal_amount = 15
 
     def __str__(self):
         return self.name
@@ -296,7 +298,7 @@ class Archer(Human):
             
     def charged_spec_attack(self, target):
         if self.num_arrows > 0: 
-            if self.ap > 1:
+            if self.ap >= 2:
                 print (f"{self.name} shoots a supercharged lightning arrow at {target.name}'s chest.")
                 damage = self.strength * random.uniform(4, 4.5)
                 self.ap -= 2
@@ -308,7 +310,8 @@ class Archer(Human):
                 time.sleep(0.8)
                 print(f"{target.name} is shocked!")
                 print(" ")
-                target.is_melting = True
+                target.is_hurt = True
+                target.is_shocked = True
                 time.sleep(0.8)
                 print(f"{self.name} has {self.ap} AP")
                 time.sleep(0.8)
@@ -354,7 +357,7 @@ class Boxer(Human):
             return False
         
     def charged_spec_attack(self, target):
-        if self.ap > 1:
+        if self.ap >= 2:
             print (f"Blazing Fists!")
             self.ap -= 2
             damage = self.strength * random.uniform(2.5, 3)
@@ -426,8 +429,7 @@ class Gunner(Human):
                     print("...")
                     time.sleep(0.8)
                     print("...")
-                    print(f'{target.name} is almost blown to bits, but comes up laughing with a face full of steel.')
-                    self.is_charging = False  # resets strength and defense so crippling works properly  
+                    print(f'{target.name} is almost blown to bits, but comes up laughing with a face full of steel.')  
                 else:
                     print(f"It rolls straight between {target.name}'s feet.")
                     time.sleep(0.8)
@@ -498,7 +500,7 @@ class Warrior(Human):
             return False
         
     def charged_spec_attack(self, target):
-        if self.ap > 2:
+        if self.ap >= 2 :
             print ("Thunderstrike Cyclone!")
             damage = self.strength * random.uniform(2.5, 3)
             self.ap -= 2
@@ -647,6 +649,7 @@ class Robo(Fighters):
                     self.num_missiles -= 1
                     target.take_damage(round(damage))
                     print(' ')
+                    target.is_hurt == True
                     target.is_melting = True
                     print(f"{target.name} is melting")
                     time.sleep(0.8)
@@ -738,7 +741,7 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
             print(" ")
             print(f"{self.enemy.name} has {self.enemy.hp}HP")
             if player_character.is_charging: # check for charged or no. if charged run attack or charged spec attack.
-                print(f"{self.player_character} is charged up!")
+                print(f"{self.player_character} is charged up... +1 AP!")
                 print("Do you want to Attack or Special Attack (-2AP)")
                 action = input().lower()
                 self.turn_counter += 1
@@ -843,8 +846,8 @@ class Fight:    # Contains player_start() (START and END), enemy_start() (START 
     def enemy_turn(self):
         print ("-----Enemy turn-----")
         print(" ")
-        if self.enemy.is_melting == True:
-            self.enemy.enemy_is_melting()
+        if self.enemy.is_hurt == True:
+            self.enemy.enemy_is_hurt()
             if self.enemy.hp <= 0:
                     raise FightOverException  # enemy is defeated, break the fight loop
         
@@ -1031,7 +1034,6 @@ class Fight3(Fight):    #Contains Start() and fight2_intro()
         elif player_character.level == 3:
             if player_character.xp >= 335:  # 5 turns this time so - 180 - 35 = 145, 145 + 190 = 335 xp to level up.
                 time.sleep(0.8)
-                print (f"+ {xp_gained} XP")
                 player_character.level_up()
     
 class Fight4(Fight):    #Contains Start() and fight2_intro()
@@ -1124,17 +1126,17 @@ if input() == "yes":
 
 # define class instances
 
-robin_hood = Archer("Robin Hood", 60, 1, 6, 7, 1, 1, 10)
+robin_hood = Archer("Robin Hood", 60, 1, 6, 15, 1, 1, 10)
 
-rocky = Boxer("Rocky", 90, 2, 7, 8, 1, 5)
+rocky = Boxer("Rocky", 120, 2, 7, 15, 1, 5)
 
-rambo = Gunner("Rambo", 140, 2, 10, 12, 1, 5, 10, 5) 
+rambo = Gunner("Rambo", 180, 2, 10, 25, 1, 5, 10, 5) 
 
-highlander = Warrior("Highlander", 200, 3, 12, 14, 1, 3)
+highlander = Warrior("Highlander", 250, 3, 12, 35, 1, 3)
 
-teen_wolf = Monster("Teen Wolf", 280, 3, 15, 18, 1)
+teen_wolf = Monster("Teen Wolf", 280, 3, 15, 50, 1)
 
-Terminator = Robo("Terminator", 350, 4, 20, 25, 1, 1, 100, 2)
+Terminator = Robo("Terminator", 350, 4, 20, 75, 1, 1, 100, 2)
 
 
 # CALLING GAME LOGIC_________________________________________________
